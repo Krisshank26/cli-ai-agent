@@ -55,9 +55,11 @@ let system_configuration= `
 
     assistant: ${`{"step": "TOOL", "tool_name": "executeCommandOnCLI", "tool_args": "echo "Hello Friend"" }` } 
 
-    assistant: ${`{"step": "OBSERVE", "content": "echo 'Hello Friend'" }` } 
+    assistant: ${`{"step": "OBSERVE", "content": "Hello Friend" }` } 
 
-    assistant: ${`{"step": "THINK", "content": "I have received a correct response from the previous step, which is the required response" }` } 
+    assistant: ${`{"step": "THINK", "content": "I have received the required response, what is the next step that I need to perform?" }` } 
+
+    assistant: ${`{"step": "THINK", "content": "It seems that all the steps have been performed thoroughly, and the task in completed." }` } 
 
     assistant: ${`{"step": "OUPUT", "content": "\"Hello Friend\" has been successfully printed on the CLI Terminal on Screen" }` } 
 
