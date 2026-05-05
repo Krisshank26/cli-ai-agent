@@ -1,15 +1,7 @@
 import dotenv from "dotenv" 
-import {OpenAI } from "openai" 
 import {exec } from "child_process" 
 
 dotenv.config() 
-
-/* console.log(process.env.GEMINI_API_KEY ) */ 
-
-/* const client= new OpenAI({ 
-    baseURL: "https://openrouter.ai/api.v1", 
-    apiKey: process.env.OPENROUTER_API_KEY 
-} ) */ 
 
 let system_configuration= ` 
     You are an AI Assistant who takes input from the CLI and forms actions from the natural language and executes commands step by step in a procedural manner. 
@@ -75,19 +67,6 @@ async function executeCommandOnCLI(command )
 { 
     return new Promise((resolve, reject )=> 
     { 
-        /* const response= exec(command, (error )=> 
-        { 
-            if(error ) 
-            { 
-                resolve("There was an Error in executing the Command "+ error ) 
-                resolve(error )  
-            } 
-            else 
-            { 
-                resolve("Command was executed successfully" ) 
-                resolve(command ) 
-            } 
-        } ) */ 
         
         exec(command, (error, stdout, stderr )=> 
         { 
@@ -104,32 +83,13 @@ async function executeCommandOnCLI(command )
                 resolve(stdout ) 
             } 
         } ) 
-        /* console.log(response ) */ 
-
-        /* resolve(command ) */ 
     } ) 
-   /* exec(command, (error )=> 
-   { 
-      console.log(error ) 
-   } ) */ 
 } 
 
 const tools= 
 { 
     "executeCommandOnCLI": executeCommandOnCLI 
 } 
-
-/* async function here() 
-{ 
-    await executeCommandOnCLI('pwd' ).then((data )=> console.log(data ) ) 
-} 
-
-here() */ 
-
-/* let response= `{"step":"TOOL","tool_name":"executeCommandOnCLI","tool_args":"echo 'Hello Friend Good Here'"}{}{}` 
-let st= response.slice(response.indexOf("{" ), (response.indexOf("}" )+ 1 ) )
-
-console.log(st ) */ 
 
 let message= 
 [ { 
@@ -147,121 +107,78 @@ The generated files must open in a browser and visually resemble the Scaler webs
 
 async function main() 
 { 
-    /* console.log("Here" ) */ 
-        /* let history_messages= [] 
-        for(let i= 0 ; i< (message.length- 1 ) ; ++i ) 
+    const response= await fetch("https://openrouter.ai/api/v1/chat/completions", 
         { 
-            history_messages.push(message[i] ) 
-        } 
-        const response= await client.models.generateContent({ 
-            model: process.env.GEMINI_MODEL, 
-            config: { 
-                systemInstruction: system_configuration 
+            method: "POST", 
+            headers: 
+            { 
+                Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 
+                'Content-Type': "application/json" 
             }, 
-            history: history_messages, 
-            contents: message[(message.length- 1 ) ].parts[0].text 
-        } ) */ 
-
-        const response= await fetch("https://openrouter.ai/api/v1/chat/completions", 
-            { 
-                method: "POST", 
-                headers: 
+            body: (JSON.stringify( 
                 { 
-                    Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 
-                    'Content-Type': "application/json" 
-                }, 
-                body: (JSON.stringify( 
-                    { 
-                        model: process.env.MODEL, 
-                        messages: message 
-                    } 
-                ) ) 
-            } ) 
-
-            /* const response= await client.chat.completions.create({ 
-                model: process.env.MODEL, 
-                messages: message 
-            } ) */ 
-
-        /* console.log(response.text.slice(response.text.indexOf("{" ), (response.text.indexOf("}" )+ 1 ) ) ) */ 
-        /* const oneResponse= await response.text().then((data )=> { console.log(JSON.parse(data ) ) ; return ((JSON.parse(data ).choices[0].message )["content" ] ) } ) */ 
-        /* console.log(response ) */ 
-        /* console.log(message ) */ 
-        const oneResponse= await response.text().then((data )=> {/* console.log(JSON.parse(data ) ) ; */ return (JSON.parse(data ).choices[0].message.content ) } ) 
-        /* console.log(oneResponse ) */ 
-        /* const parsedResponse= (JSON.parse(oneResponse.slice(oneResponse.indexOf("{" ), (oneResponse.indexOf("}" )+ 1 ) ) ) ) */ 
-        /* console.log(oneResponse ) */ 
-        const parsedResponse= (JSON.parse(oneResponse ) ) 
-        /* console.log(message[(message.length- 1 ) ], parsedResponse["step" ] ) */ 
-        /* let oneResponse= response.text.slice(response.text.indexOf("{" ), (response.text.indexOf("}" )+ 1 ) ) 
-        const parsedResponse= JSON.parse((oneResponse ).trim() ) */ 
-
-        if(parsedResponse["step" ]=== "INPUT" ) 
-        { 
-            console.log("Model is processing INPUT... " ) 
-            console.log(parsedResponse["content" ]+ '\n' ) 
-        } 
-        else if(parsedResponse["step" ]=== "THINK" ) 
-        { 
-            console.log("Model is THINKING... " ) 
-            console.log(parsedResponse["content" ]+ '\n' ) 
-        } 
-        else if(parsedResponse["step" ]=== "TOOL" ) 
-        { 
-            console.log("Model is using TOOL "+ parsedResponse["tool_name" ]+ " with Arguments As "+ parsedResponse["tool_args" ]+ '\n' ) 
-        } 
-        else if(parsedResponse["step" ]=== "OBSERVE" ) 
-        { 
-            console.log("Model is OBSERVING the Response... " ) 
-            console.log(parsedResponse["content" ]+ '\n' ) 
-        } 
-        else if(parsedResponse["step" ]=== "OUTPUT" ) 
-        { 
-            console.log("Model has given OUTPUT..." ) 
-            console.log(parsedResponse["content" ]+ '\n' ) 
-            return 
-        } 
-        if(parsedResponse["step" ]=== "INPUT" || parsedResponse["step" ]=== "THINK" ) 
-        { 
-            message.push( 
-                { 
-                    role: "assistant", 
-                    content: (JSON.stringify(parsedResponse ) ) 
+                    model: process.env.MODEL, 
+                    messages: message 
                 } 
-            ) 
-        } 
-        else if(parsedResponse["step" ]=== "TOOL" ) 
-        { 
-            const commandResponse= await tools[parsedResponse["tool_name" ] ](parsedResponse["tool_args" ] ).then((data )=> { return data } ) 
-            /* console.log(commandResponse ) */ 
-            const observeResponse= 
+            ) ) 
+        } ) 
+
+    const oneResponse= await response.text().then((data )=> {/* console.log(JSON.parse(data ) ) ; */ return (JSON.parse(data ).choices[0].message.content ) } ) 
+    /* console.log(oneResponse ) */ 
+    /* const parsedResponse= (JSON.parse(oneResponse.slice(oneResponse.indexOf("{" ), (oneResponse.indexOf("}" )+ 1 ) ) ) ) */ 
+    /* console.log(oneResponse ) */ 
+    const parsedResponse= (JSON.parse(oneResponse ) ) 
+
+    if(parsedResponse["step" ]=== "INPUT" ) 
+    { 
+        console.log("Model is processing INPUT... " ) 
+        console.log(parsedResponse["content" ]+ '\n' ) 
+    } 
+    else if(parsedResponse["step" ]=== "THINK" ) 
+    { 
+        console.log("Model is THINKING... " ) 
+        console.log(parsedResponse["content" ]+ '\n' ) 
+    } 
+    else if(parsedResponse["step" ]=== "TOOL" ) 
+    { 
+        console.log("Model is using TOOL "+ parsedResponse["tool_name" ]+ " with Arguments As "+ parsedResponse["tool_args" ]+ '\n' ) 
+    } 
+    else if(parsedResponse["step" ]=== "OBSERVE" ) 
+    { 
+        console.log("Model is OBSERVING the Response... " ) 
+        console.log(parsedResponse["content" ]+ '\n' ) 
+    } 
+    else if(parsedResponse["step" ]=== "OUTPUT" ) 
+    { 
+        console.log("Model has given OUTPUT..." ) 
+        console.log(parsedResponse["content" ]+ '\n' ) 
+        return 
+    } 
+    if(parsedResponse["step" ]=== "INPUT" || parsedResponse["step" ]=== "THINK" ) 
+    { 
+        message.push( 
             { 
-                step: "OBSERVE", 
-                content: commandResponse 
+                role: "assistant", 
+                content: (JSON.stringify(parsedResponse ) ) 
             } 
-            message.push( 
-                { 
-                    role: "assistant", 
-                    content: (JSON.stringify(observeResponse ) ) 
-                } 
-            ) 
+        ) 
+    } 
+    else if(parsedResponse["step" ]=== "TOOL" ) 
+    { 
+        const commandResponse= await tools[parsedResponse["tool_name" ] ](parsedResponse["tool_args" ] ).then((data )=> { return data } ) 
+        const observeResponse= 
+        { 
+            step: "OBSERVE", 
+            content: commandResponse 
         } 
-        await main() 
-        /* else if(parsedResponse["step" ]=== "OBSERVE" ) 
-        { 
-            message.push( 
-                { 
-                    role: "assisstant", 
-                    content: (JSON.stringify(parsedResponse ) ) 
-                } 
-            ) 
-        } */ 
-        /* catch (error ) 
-        { 
-            console.log(error.status ) 
-            setTimeout(()=> (console.log("Trying again here... " ) ), 3000 ) 
-        } */ 
-    
+        message.push( 
+            { 
+                role: "assistant", 
+                content: (JSON.stringify(observeResponse ) ) 
+            } 
+        ) 
+    } 
+    await main() 
 } 
 
 main() 
