@@ -167,8 +167,22 @@ async function main()
     } 
     else if(parsedResponse["step" ]=== "TOOL" ) 
     { 
-        const commandResponse= await tools[parsedResponse["tool_name" ] ](parsedResponse["tool_args" ] ).then((data )=> { return data } ) 
-        const observeResponse= 
+        await tools[parsedResponse["tool_name" ] ](parsedResponse["tool_args" ] ).then((data )=> 
+        { 
+            const observeResponse= 
+            { 
+                step: "OBSERVE", 
+                content: data 
+            } 
+
+            message.push( 
+                { 
+                    role: "assistant", 
+                    content: (JSON.stringify(observeResponse ) ) 
+                } 
+            ) 
+        } ) 
+        /* const observeResponse= 
         { 
             step: "OBSERVE", 
             content: commandResponse 
@@ -178,7 +192,7 @@ async function main()
                 role: "assistant", 
                 content: (JSON.stringify(observeResponse ) ) 
             } 
-        ) 
+        ) */ 
     } 
     await main() 
 } 
